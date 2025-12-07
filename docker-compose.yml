@@ -5,21 +5,32 @@ services:
     build: .
     container_name: fivem_server
     restart: unless-stopped
+    
     ports:
+      # Game Port (Standard 30120)
       - "30120:30120/tcp"
       - "30120:30120/udp"
-      # SFTP Access: Host Port 2022 -> Container Port 22
-      - "2022:22" 
+      
+      # SFTP Access: Host Port -> Container Port 22
+      - "${SFTP_PORT:-2022}:22"
+      
+      # txAdmin Direct Access: Host Port -> Container Port (Dynamic)
+      # If you change TXADMIN_PORT, it changes both external and internal mapping.
+      - "${TXADMIN_PORT:-40120}:40120"
+    
     expose:
-      - "40120"
+      # Expose the dynamic port to Docker network
+      - "${TXADMIN_PORT:-40120}"
 
     environment:
       - FIVEM_LICENSE_KEY=${FIVEM_LICENSE_KEY}
-      - TXADMIN_PORT=40120
-      # SFTP Password (Set this in Coolify!)
+      
+      # Pass the dynamic port to the container application
+      - TXADMIN_PORT=${TXADMIN_PORT:-40120}
+      
       - SFTP_PASSWORD=${SFTP_PASSWORD:-securepassword123}
       
-      # Database vars
+      # Database Internal Connection
       - DB_HOST=mariadb
       - DB_USER=${DB_USER:-fivemuser}
       - DB_PASS=${DB_PASSWORD:-changeme}
@@ -33,13 +44,21 @@ services:
 
     labels:
       - "traefik.enable=true"
-      - "traefik.http.services.fivem.loadbalancer.server.port=40120"
+      # ---------------------------------------------------------
+      # UPDATED: The port now comes from the variable
+      # ---------------------------------------------------------
+      - "traefik.http.services.fivem.loadbalancer.server.port=${TXADMIN_PORT:-40120}"
       - "traefik.http.routers.fivem.middlewares=redirect-to-https"
 
   mariadb:
     image: mariadb:11.4
     container_name: fivem_database
     restart: always
+    
+    ports:
+      # Database External Access
+      - "${DB_EXTERNAL_PORT:-3306}:3306"
+
     environment:
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootchangeme}
       MARIADB_DATABASE: ${DB_NAME:-fivem}
