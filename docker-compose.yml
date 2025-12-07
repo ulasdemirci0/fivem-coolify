@@ -19,13 +19,16 @@ services:
       - "40120"
 
     environment:
+      # CRITICAL: This must be set in Coolify variables, no default provided.
       - FIVEM_LICENSE_KEY=${FIVEM_LICENSE_KEY}
+      
       - TXADMIN_PORT=40120
-      # Database connection vars
+      
+      # Database connection vars (Using :- for defaults)
       - DB_HOST=mariadb
-      - DB_USER=${DB_USER=fivemuser}
-      - DB_PASS=${DB_PASSWORD=changeme}
-      - DB_NAME=${DB_NAME=fivem}
+      - DB_USER=${DB_USER:-fivemuser}
+      - DB_PASS=${DB_PASSWORD:-changeme}
+      - DB_NAME=${DB_NAME:-fivem}
       
     volumes:
       - fivem_data:/opt/fivem
@@ -38,9 +41,8 @@ services:
     # ---------------------------------------------------------
     labels:
       - "traefik.enable=true"
-      # Tells Traefik to route HTTP traffic to the Admin port (40120), NOT the game port
+      # Tells Traefik to route HTTP traffic to the Admin port (40120)
       - "traefik.http.services.fivem.loadbalancer.server.port=40120"
-      # (Optional) If you want to force HTTPS redirection:
       - "traefik.http.routers.fivem.middlewares=redirect-to-https"
 
   mariadb:
@@ -48,10 +50,11 @@ services:
     container_name: fivem_database
     restart: always
     environment:
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD=rootchangeme}
-      MARIADB_DATABASE: ${DB_NAME=fivem}
-      MARIADB_USER: ${DB_USER=fivemuser}
-      MARIADB_PASSWORD: ${DB_PASSWORD=changeme}
+      # Database Setup vars (Using :- for defaults)
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootchangeme}
+      MARIADB_DATABASE: ${DB_NAME:-fivem}
+      MARIADB_USER: ${DB_USER:-fivemuser}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-changeme}
     volumes:
       - mariadb_data:/var/lib/mysql
 
