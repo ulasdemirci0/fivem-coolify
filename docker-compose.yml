@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # -------------------------------------------------------
+  # Service 1: The FiveM Server ("Main OS")
+  # -------------------------------------------------------
+  fivem:
+    build: .
+    container_name: fivem_server
+    restart: unless-stopped
+    ports:
+      - "30120:30120" # Game Port
+      - "30120:30120" # Game Port
+      - "40120:40120" # txAdmin Port
+    volumes:
+      - fivem_data:/opt/fivem # Persistent server data
+    environment:
+      - FIVEM_LICENSE_KEY=${FIVEM_LICENSE_KEY}
+      - TXADMIN_PORT=40120
+      - DB_HOST=mariadb
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    depends_on:
+      - mariadb
+    # This ensures the container stays open even if the server crashes
+    tty: true 
+
+  # -------------------------------------------------------
+  # Service 2: MariaDB 11.4.9 (Database)
+  # -------------------------------------------------------
+  mariadb:
+    # Using the 11.4 series tag. If 11.4.9 is not yet on Docker Hub, 
+    # it will pull the latest 11.4.x available.
+    image: mariadb:11.4
+    container_name: fivem_database
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+volumes:
+  fivem_data:
+  mariadb_data:
