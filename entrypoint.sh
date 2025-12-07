@@ -23,6 +23,21 @@ else
     echo "--- ℹ️ FiveM Artifacts already exist. Skipping download. ---"
 fi
 
+
+# ----------------------------------------------------------------
+# NEW: Setup SFTP (SSH) User
+# ----------------------------------------------------------------
+if [ -n "$SFTP_PASSWORD" ]; then
+    echo "--- 🔑 Setting SFTP (root) password... ---"
+    echo "root:$SFTP_PASSWORD" | chpasswd
+else
+    echo "--- ⚠️ No SFTP_PASSWORD set. SFTP access may fail! ---"
+fi
+
+echo "--- 📡 Starting SSH Service... ---"
+service ssh start
+# ----------------------------------------------------------------
+
 # We use a loop here so if the server crashes, 
 # it restarts automatically after 5 seconds, keeping the container open.
 while true; do

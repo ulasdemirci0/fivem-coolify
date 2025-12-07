@@ -2,7 +2,7 @@ FROM debian:bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies
+# Install dependencies + openssh-server
 RUN apt-get update && apt-get install -y \
     curl \
     wget \
@@ -12,15 +12,16 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     iproute2 \
     tini \
+    openssh-server \
     && rm -rf /var/lib/apt/lists/*
+
+# Configure SSH to allow root login with password
+RUN mkdir /var/run/sshd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
 WORKDIR /opt/fivem
 
-# -----------------------------------------------------------
-# UPDATED: Copy entrypoint.sh from root (no 'scripts/' folder)
-# -----------------------------------------------------------
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Tini ensures signals are handled correctly
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/entrypoint.sh"]

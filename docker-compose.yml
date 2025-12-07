@@ -5,26 +5,21 @@ services:
     build: .
     container_name: fivem_server
     restart: unless-stopped
-    
-    # ---------------------------------------------------------
-    # PORT MAPPING STRATEGY
-    # ---------------------------------------------------------
     ports:
-      # DIRECT MAP: Bypasses Traefik. Essential for Game Traffic.
       - "30120:30120/tcp"
       - "30120:30120/udp"
-    
+      # SFTP Access: Host Port 2022 -> Container Port 22
+      - "2022:22" 
     expose:
-      # INTERNAL ONLY: Traefik will route domain traffic here.
       - "40120"
 
     environment:
-      # CRITICAL: This must be set in Coolify variables, no default provided.
       - FIVEM_LICENSE_KEY=${FIVEM_LICENSE_KEY}
-      
       - TXADMIN_PORT=40120
+      # SFTP Password (Set this in Coolify!)
+      - SFTP_PASSWORD=${SFTP_PASSWORD:-securepassword123}
       
-      # Database connection vars (Using :- for defaults)
+      # Database vars
       - DB_HOST=mariadb
       - DB_USER=${DB_USER:-fivemuser}
       - DB_PASS=${DB_PASSWORD:-changeme}
@@ -36,12 +31,8 @@ services:
     depends_on:
       - mariadb
 
-    # ---------------------------------------------------------
-    # TRAEFIK CONFIGURATION (COOLIFY)
-    # ---------------------------------------------------------
     labels:
       - "traefik.enable=true"
-      # Tells Traefik to route HTTP traffic to the Admin port (40120)
       - "traefik.http.services.fivem.loadbalancer.server.port=40120"
       - "traefik.http.routers.fivem.middlewares=redirect-to-https"
 
@@ -50,7 +41,6 @@ services:
     container_name: fivem_database
     restart: always
     environment:
-      # Database Setup vars (Using :- for defaults)
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootchangeme}
       MARIADB_DATABASE: ${DB_NAME:-fivem}
       MARIADB_USER: ${DB_USER:-fivemuser}
