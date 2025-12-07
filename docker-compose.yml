@@ -23,9 +23,9 @@ services:
       - TXADMIN_PORT=40120
       # Database connection vars
       - DB_HOST=mariadb
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER=fivemuser}
+      - DB_PASS=${DB_PASSWORD=changeme}
+      - DB_NAME=${DB_NAME=fivem}
       
     volumes:
       - fivem_data:/opt/fivem
@@ -48,10 +48,10 @@ services:
     container_name: fivem_database
     restart: always
     environment:
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MARIADB_DATABASE: ${DB_NAME}
-      MARIADB_USER: ${DB_USER}
-      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD=rootchangeme}
+      MARIADB_DATABASE: ${DB_NAME=fivem}
+      MARIADB_USER: ${DB_USER=fivemuser}
+      MARIADB_PASSWORD: ${DB_PASSWORD=changeme}
     volumes:
       - mariadb_data:/var/lib/mysql
 
