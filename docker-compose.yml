@@ -1,37 +1,49 @@
 version: '3.8'
 
 services:
-  # -------------------------------------------------------
-  # Service 1: The FiveM Server ("Main OS")
-  # -------------------------------------------------------
   fivem:
     build: .
     container_name: fivem_server
     restart: unless-stopped
+    
+    # ---------------------------------------------------------
+    # PORT MAPPING STRATEGY
+    # ---------------------------------------------------------
     ports:
-      - "30120:30120" # Game Port
-      - "30120:30120" # Game Port
-      - "40120:40120" # txAdmin Port
-    volumes:
-      - fivem_data:/opt/fivem # Persistent server data
+      # DIRECT MAP: Bypasses Traefik. Essential for Game Traffic.
+      - "30120:30120/tcp"
+      - "30120:30120/udp"
+    
+    expose:
+      # INTERNAL ONLY: Traefik will route domain traffic here.
+      - "40120"
+
     environment:
       - FIVEM_LICENSE_KEY=${FIVEM_LICENSE_KEY}
       - TXADMIN_PORT=40120
+      # Database connection vars
       - DB_HOST=mariadb
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
+      
+    volumes:
+      - fivem_data:/opt/fivem
+    
     depends_on:
       - mariadb
-    # This ensures the container stays open even if the server crashes
-    tty: true 
 
-  # -------------------------------------------------------
-  # Service 2: MariaDB 11.4.9 (Database)
-  # -------------------------------------------------------
+    # ---------------------------------------------------------
+    # TRAEFIK CONFIGURATION (COOLIFY)
+    # ---------------------------------------------------------
+    labels:
+      - "traefik.enable=true"
+      # Tells Traefik to route HTTP traffic to the Admin port (40120), NOT the game port
+      - "traefik.http.services.fivem.loadbalancer.server.port=40120"
+      # (Optional) If you want to force HTTPS redirection:
+      - "traefik.http.routers.fivem.middlewares=redirect-to-https"
+
   mariadb:
-    # Using the 11.4 series tag. If 11.4.9 is not yet on Docker Hub, 
-    # it will pull the latest 11.4.x available.
     image: mariadb:11.4
     container_name: fivem_database
     restart: always
